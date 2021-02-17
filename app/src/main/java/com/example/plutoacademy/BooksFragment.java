@@ -1,15 +1,12 @@
 package com.example.plutoacademy;
 
 import android.app.Dialog;
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.util.Log;
@@ -46,6 +43,13 @@ public class BooksFragment extends Fragment implements  OnItemClick {
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
 
+    public static final String BOOK_TITLE="BOOKTITLE";
+    public static final String BOOK_IMAGE="BOOKIMAGE";
+    public static final String BOOK_SIZE="BOOKSIZE";
+    public static final String BOOK_BUY="BOOKBUY";
+    public static final String BOOK_RECCS="BOOKRECCS";
+    public static final String BOOK_AUTHOR="BOOKAUTHOR";
+
     // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
@@ -76,6 +80,7 @@ public class BooksFragment extends Fragment implements  OnItemClick {
     private RecyclerView.Adapter mAdapter;
     SearchView searchView;
     ArrayList<BooksModel> BooksList ;
+    ArrayList<BookDetailedDataModel> BooksDetailedList;
     Dialog dialog;
 
 //    private RecyclerView.LayoutManager mLayoutManager;
@@ -96,6 +101,7 @@ public class BooksFragment extends Fragment implements  OnItemClick {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_books, container, false);
         BooksList = new ArrayList<>();
+        BooksDetailedList=new ArrayList<>();
         searchView=view.findViewById(R.id.searchBooks);
 
 
@@ -108,6 +114,7 @@ public class BooksFragment extends Fragment implements  OnItemClick {
             @Override
             public boolean onQueryTextChange(String newText) {
                 BooksList.clear();
+                BooksDetailedList.clear();
                 getDataOnSearch(newText);
                 return false;
             }
@@ -135,7 +142,10 @@ public class BooksFragment extends Fragment implements  OnItemClick {
             public void onResponse(String response) {
                 Log.d("Hello",response.toString());
                 String image = null;
-                String buy = null;
+                String title=null;
+                String buy=null;
+                String author=null;
+                JSONArray recommenders=null;
                 int size = 0;
                 try {
                     JSONObject jsonObject = new JSONObject(response);
@@ -145,9 +155,9 @@ public class BooksFragment extends Fragment implements  OnItemClick {
                         JSONObject jsonObject1=jsonArray.getJSONObject(i);
                          image=jsonObject1.getString("mainImage");
                          buy=jsonObject1.getString("buy");
-                        String title=jsonObject1.getString("title");
+                         title=jsonObject1.getString("title");
                         if(!jsonObject1.isNull("recommenders")) {
-                            JSONArray recommenders = jsonObject1.getJSONArray("recommenders");
+                            recommenders = jsonObject1.getJSONArray("recommenders");
                             size = recommenders.length();
                         }
                         if(size < 10) size = 10;
@@ -156,6 +166,7 @@ public class BooksFragment extends Fragment implements  OnItemClick {
                         else if(size>50 && size<100) size = 25;
                         else size = 100;
                         BooksList.add(new BooksModel(image, size, title));
+                        BooksDetailedList.add(new BookDetailedDataModel(image,size,title,buy,author,recommenders));
 
                     }
                     mAdapter = new BooksAdapter(BooksList,BooksFragment.this);
@@ -185,7 +196,6 @@ public class BooksFragment extends Fragment implements  OnItemClick {
             public void onResponse(String response) {
                 Log.d("data",response.toString());
                 String image=null;
-
                 String buy=null;
                 int size=0;
                 try {
@@ -249,6 +259,17 @@ public class BooksFragment extends Fragment implements  OnItemClick {
 
     @Override
     public void Onclick(int position) {
-    startActivity(new Intent(getContext(),BookDescription.class));
+
+     Intent mIntent=new Intent(getContext(),BookDescription.class);
+     Bundle mBundle = new Bundle();
+     mBundle.putString(BOOK_BUY,BooksDetailedList.get(position).getmBuy());
+     mBundle.putString(BOOK_IMAGE,BooksDetailedList.get(position).getmBookImage());
+     mBundle.putString(BOOK_RECCS,BooksDetailedList.get(position).getmRecc().toString());
+     mBundle.putInt(BOOK_SIZE,BooksDetailedList.get(position).getmRecBookNo());
+     mBundle.putString(BOOK_TITLE,BooksDetailedList.get(position).getmTitle());
+     mBundle.putString(BOOK_AUTHOR,BooksDetailedList.get(position).getmAuthor());
+     mIntent.putExtras(mBundle);
+     startActivity(mIntent);
+    //image,name(title),by,recommender,author
     }
 }
